@@ -1,0 +1,604 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bve.local/schemas/bve-interchange.schema.json",
+  "title": "BVE portable interchange document",
+  "description": "Implementation-neutral records for Results, Ways, Red Team reviews, Twin history, evidence, evaluation, and Improvements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "format_version", "document_id", "created_at", "records"],
+  "properties": {
+    "format": { "const": "bve-interchange" },
+    "format_version": { "type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+$" },
+    "document_id": { "$ref": "#/$defs/id" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/record" }
+    },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "text": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "extensions": {
+      "type": "object",
+      "description": "Namespaced, non-core data. Keys use a stable namespace followed by a colon and term.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9./-]*:[A-Za-z][A-Za-z0-9._/-]*$"
+      },
+      "additionalProperties": true
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": ["result", "plan", "review", "execution", "verification", "evaluation", "improvement", "event"]
+        },
+        "version": { "type": "integer", "minimum": 1 },
+        "hash": { "$ref": "#/$defs/hash" },
+        "uri": { "type": "string", "format": "uri-reference" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer"],
+      "properties": {
+        "producer": { "$ref": "#/$defs/text" },
+        "agent": { "type": "string" },
+        "model": { "type": "string" },
+        "workflow": { "type": "string" },
+        "source_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reference" }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "hash"],
+      "properties": {
+        "canonicalization": { "const": "bve-canonical-json-v1" },
+        "hash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "measure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "unit"],
+      "properties": {
+        "status": { "enum": ["estimated", "measured", "unknown", "not_applicable"] },
+        "value": { "type": ["number", "null"] },
+        "unit": { "$ref": "#/$defs/text" },
+        "source_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reference" }
+        },
+        "limitations": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["unknown", "not_applicable"] } } },
+          "then": { "properties": { "value": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["estimated", "measured"] } } },
+          "then": { "properties": { "value": { "type": "number" } } }
+        }
+      ]
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description": { "$ref": "#/$defs/text" },
+        "consequence": { "type": "string" },
+        "mitigation": { "type": "string" },
+        "residual_risk": { "type": "string" },
+        "status": { "enum": ["open", "mitigated", "accepted", "realized", "avoided", "unknown"] },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reference" }
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description": { "$ref": "#/$defs/text" },
+        "uri": { "type": "string", "format": "uri-reference" },
+        "hash": { "$ref": "#/$defs/hash" },
+        "media_type": { "type": "string" },
+        "observed_at": { "$ref": "#/$defs/timestamp" },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+    "record_base": {
+      "type": "object",
+      "required": ["kind", "id", "schema_version", "created_at", "provenance"],
+      "properties": {
+        "kind": {
+          "enum": ["result", "plan", "review", "execution", "verification", "evaluation", "improvement", "event"]
+        },
+        "id": { "$ref": "#/$defs/id" },
+        "schema_version": { "type": "integer", "minimum": 1 },
+        "version": { "type": "integer", "minimum": 1 },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "integrity": { "$ref": "#/$defs/integrity" },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      }
+    },
+    "result_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "result" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "description", "classification", "target", "acceptance_criteria"],
+              "properties": {
+                "title": { "$ref": "#/$defs/text" },
+                "description": { "$ref": "#/$defs/text" },
+                "classification": { "enum": ["TASK", "SPEC"] },
+                "target": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type", "locator"],
+                  "properties": {
+                    "type": { "$ref": "#/$defs/text" },
+                    "locator": { "$ref": "#/$defs/text" },
+                    "version": { "type": "string" },
+                    "extensions": { "$ref": "#/$defs/extensions" }
+                  }
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["id", "description"],
+                    "properties": {
+                      "id": { "$ref": "#/$defs/id" },
+                      "description": { "$ref": "#/$defs/text" },
+                      "evidence_refs": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/reference" }
+                      },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "constraints": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/text" }
+                },
+                "verification_expectations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["id", "description"],
+                    "properties": {
+                      "id": { "$ref": "#/$defs/id" },
+                      "description": { "$ref": "#/$defs/text" },
+                      "method": { "type": "string" },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "plan_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "plan" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["result_ref", "status", "summary", "steps"],
+              "properties": {
+                "result_ref": { "$ref": "#/$defs/reference" },
+                "status": { "enum": ["draft", "approved", "superseded", "rejected"] },
+                "summary": { "$ref": "#/$defs/text" },
+                "steps": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["id", "title", "description", "depends_on", "risks", "assumptions", "verification"],
+                    "properties": {
+                      "id": { "$ref": "#/$defs/id" },
+                      "title": { "$ref": "#/$defs/text" },
+                      "description": { "$ref": "#/$defs/text" },
+                      "depends_on": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/id" },
+                        "uniqueItems": true
+                      },
+                      "risks": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/risk" }
+                      },
+                      "assumptions": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/text" }
+                      },
+                      "verification": { "$ref": "#/$defs/text" },
+                      "expected": {
+                        "type": "object",
+                        "additionalProperties": { "$ref": "#/$defs/measure" }
+                      },
+                      "executor_requirements": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/text" }
+                      },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "budget": {
+                  "type": "object",
+                  "additionalProperties": { "$ref": "#/$defs/measure" }
+                },
+                "accepted_risks": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/risk" }
+                },
+                "approval_refs": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/reference" }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "review_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "review" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["review_type", "subject_ref", "reviewer", "decision", "findings"],
+              "properties": {
+                "review_type": { "enum": ["red_team", "peer", "owner", "automated"] },
+                "subject_ref": { "$ref": "#/$defs/reference" },
+                "reviewer": { "$ref": "#/$defs/text" },
+                "decision": { "enum": ["pass", "fail", "advisory"] },
+                "rationale": { "type": "string" },
+                "findings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["id", "severity", "description", "disposition"],
+                    "properties": {
+                      "id": { "$ref": "#/$defs/id" },
+                      "severity": { "enum": ["showstopper", "error", "improvement", "observation"] },
+                      "description": { "$ref": "#/$defs/text" },
+                      "consequence": { "type": "string" },
+                      "disposition": { "enum": ["open", "resolved", "accepted", "advisory"] },
+                      "rationale": { "type": "string" },
+                      "evidence_refs": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/reference" }
+                      },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "execution_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "execution" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["plan_ref", "status", "step_runs", "actual"],
+              "properties": {
+                "plan_ref": { "$ref": "#/$defs/reference" },
+                "status": { "enum": ["pending", "running", "completed", "failed", "aborted"] },
+                "started_at": { "$ref": "#/$defs/timestamp" },
+                "finished_at": { "$ref": "#/$defs/timestamp" },
+                "step_runs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["step_id", "status", "evidence"],
+                    "properties": {
+                      "step_id": { "$ref": "#/$defs/id" },
+                      "status": { "enum": ["pending", "preparing", "prepared", "committing", "completed", "failed", "skipped"] },
+                      "started_at": { "$ref": "#/$defs/timestamp" },
+                      "finished_at": { "$ref": "#/$defs/timestamp" },
+                      "actual": {
+                        "type": "object",
+                        "additionalProperties": { "$ref": "#/$defs/measure" }
+                      },
+                      "realized_risks": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/risk" }
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/evidence" }
+                      },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "actual": {
+                  "type": "object",
+                  "additionalProperties": { "$ref": "#/$defs/measure" }
+                },
+                "realized_risks": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/risk" }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "verification_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "verification" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["result_ref", "execution_ref", "outcome", "checks", "evidence"],
+              "properties": {
+                "result_ref": { "$ref": "#/$defs/reference" },
+                "execution_ref": { "$ref": "#/$defs/reference" },
+                "outcome": { "enum": ["pass", "fail", "inconclusive"] },
+                "checks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["criterion_id", "outcome", "description"],
+                    "properties": {
+                      "criterion_id": { "$ref": "#/$defs/id" },
+                      "outcome": { "enum": ["pass", "fail", "inconclusive", "not_run"] },
+                      "description": { "$ref": "#/$defs/text" },
+                      "evidence_refs": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/reference" }
+                      },
+                      "extensions": { "$ref": "#/$defs/extensions" }
+                    }
+                  }
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/evidence" }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "evaluation_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "evaluation" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["result_ref", "plan_ref", "execution_ref", "result", "way"],
+              "properties": {
+                "result_ref": { "$ref": "#/$defs/reference" },
+                "plan_ref": { "$ref": "#/$defs/reference" },
+                "execution_ref": { "$ref": "#/$defs/reference" },
+                "verification_ref": { "$ref": "#/$defs/reference" },
+                "result": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["outcome", "rationale"],
+                  "properties": {
+                    "outcome": { "enum": ["achieved", "not_achieved", "inconclusive"] },
+                    "rationale": { "$ref": "#/$defs/text" },
+                    "criterion_outcomes": {
+                      "type": "object",
+                      "additionalProperties": { "enum": ["pass", "fail", "inconclusive", "not_assessed"] }
+                    },
+                    "extensions": { "$ref": "#/$defs/extensions" }
+                  }
+                },
+                "way": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["outcome", "rationale", "comparisons"],
+                  "properties": {
+                    "outcome": { "enum": ["met", "exceeded", "failed", "inconclusive"] },
+                    "rationale": { "$ref": "#/$defs/text" },
+                    "comparisons": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["status"],
+                        "properties": {
+                          "status": { "enum": ["met", "exceeded", "not_estimated", "not_measured", "not_applicable"] },
+                          "expected": { "$ref": "#/$defs/measure" },
+                          "actual": { "$ref": "#/$defs/measure" },
+                          "rationale": { "type": "string" },
+                          "extensions": { "$ref": "#/$defs/extensions" }
+                        }
+                      }
+                    },
+                    "extensions": { "$ref": "#/$defs/extensions" }
+                  }
+                },
+                "improvement_refs": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/reference" }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "improvement_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "improvement" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["target", "status", "title", "proposal", "rationale", "based_on_refs"],
+              "properties": {
+                "target": { "enum": ["result", "way", "library", "policy", "tooling"] },
+                "status": { "enum": ["proposed", "accepted", "rejected", "implemented", "superseded"] },
+                "title": { "$ref": "#/$defs/text" },
+                "proposal": { "$ref": "#/$defs/text" },
+                "rationale": { "$ref": "#/$defs/text" },
+                "based_on_refs": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "$ref": "#/$defs/reference" }
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "event_record": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/record_base" },
+        {
+          "type": "object",
+          "required": ["spec"],
+          "properties": {
+            "kind": { "const": "event" },
+            "spec": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sequence", "event_type", "actor", "subject_refs", "payload"],
+              "properties": {
+                "sequence": { "type": "integer", "minimum": 1 },
+                "event_type": { "$ref": "#/$defs/text" },
+                "actor": { "$ref": "#/$defs/text" },
+                "subject_refs": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/reference" }
+                },
+                "payload": { "type": "object" },
+                "previous_event_hash": {
+                  "anyOf": [
+                    { "$ref": "#/$defs/hash" },
+                    { "type": "null" }
+                  ]
+                },
+                "extensions": { "$ref": "#/$defs/extensions" }
+              }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "record": {
+      "oneOf": [
+        { "$ref": "#/$defs/result_record" },
+        { "$ref": "#/$defs/plan_record" },
+        { "$ref": "#/$defs/review_record" },
+        { "$ref": "#/$defs/execution_record" },
+        { "$ref": "#/$defs/verification_record" },
+        { "$ref": "#/$defs/evaluation_record" },
+        { "$ref": "#/$defs/improvement_record" },
+        { "$ref": "#/$defs/event_record" }
+      ]
+    }
+  }
+}

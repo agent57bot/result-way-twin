@@ -1,0 +1,25 @@
+# Runs the vendored profile checker against in-repo fixtures.
+# The issue-log workflow is .github/workflows/validate-twin.yml.
+
+name: Checker self-test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Twin store
+        uses: actions/checkout@v4
+
+      - name: Install checker dependencies
+        run: python3 -m pip install -r implementations/github-issues-twin/scripts/requirements.txt
+
+      - name: Run the profile checker self-test
+        run: python3 implementations/github-issues-twin/scripts/validate_github_issues_twin.py --self-test
