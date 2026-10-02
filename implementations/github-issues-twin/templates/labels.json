@@ -1,0 +1,82 @@
+[
+  {
+    "name": "rw:kind:result",
+    "color": "1D76DB",
+    "description": "This issue is one Result"
+  },
+  {
+    "name": "rw:status:intake",
+    "color": "0E8A16",
+    "description": "Opening result only"
+  },
+  {
+    "name": "rw:status:planning",
+    "color": "FBCA04",
+    "description": "A draft plan is the latest Way record"
+  },
+  {
+    "name": "rw:status:review",
+    "color": "D93F0B",
+    "description": "Independent review is the latest Way record"
+  },
+  {
+    "name": "rw:status:execution",
+    "color": "5319E7",
+    "description": "Execution is the latest Way record"
+  },
+  {
+    "name": "rw:status:verification",
+    "color": "006B75",
+    "description": "Verification is the latest Way record"
+  },
+  {
+    "name": "rw:status:evaluation",
+    "color": "BFD4F2",
+    "description": "Evaluation is the latest Way record"
+  },
+  {
+    "name": "rw:status:closed",
+    "color": "C5DEF5",
+    "description": "Work on this Result issue is finished"
+  },
+  {
+    "name": "rw:latest:plan",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is a plan"
+  },
+  {
+    "name": "rw:latest:review",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is a review"
+  },
+  {
+    "name": "rw:latest:execution",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is an execution"
+  },
+  {
+    "name": "rw:latest:verification",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is a verification"
+  },
+  {
+    "name": "rw:latest:evaluation",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is an evaluation"
+  },
+  {
+    "name": "rw:latest:improvement",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is an improvement"
+  },
+  {
+    "name": "rw:latest:event",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is an event"
+  },
+  {
+    "name": "rw:latest:result",
+    "color": "EDEDED",
+    "description": "Newest authoritative record is a new result version"
+  }
+]

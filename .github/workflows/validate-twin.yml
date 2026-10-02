@@ -1,0 +1,37 @@
+# Copy this file to .github/workflows/validate-twin.yml in the Twin-store
+# repository. Also copy, unchanged:
+#   schemas/bve-interchange.schema.json
+#   implementations/github-issues-twin/scripts/validate_github_issues_twin.py
+#   implementations/github-issues-twin/scripts/requirements.txt
+# Record the protocol commit you copied. This workflow does not change the schema.
+
+name: Validate Twin issue
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Twin store
+        uses: actions/checkout@v4
+
+      - name: Install checker dependencies
+        run: python3 -m pip install -r implementations/github-issues-twin/scripts/requirements.txt
+
+      - name: Validate the issue log against the interchange schema and this profile
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 implementations/github-issues-twin/scripts/validate_github_issues_twin.py \
+            --schema schemas/bve-interchange.schema.json \
+            --repository "${{ github.repository }}" \
+            --issue "${{ github.event.issue.number }}"

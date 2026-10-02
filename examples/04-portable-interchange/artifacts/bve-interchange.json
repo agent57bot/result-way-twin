@@ -1,0 +1,380 @@
+{
+  "format": "bve-interchange",
+  "format_version": "1.0",
+  "document_id": "portable-example/run-001/export-1",
+  "created_at": "2026-10-02T13:00:00Z",
+  "records": [
+    {
+      "kind": "result",
+      "id": "portable-example/run-001/result",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:00:00Z",
+      "provenance": {
+        "producer": "portable-example"
+      },
+      "spec": {
+        "title": "Publish a portable status document",
+        "description": "Create a status document that can be verified independently of the implementation that produced it.",
+        "classification": "TASK",
+        "target": {
+          "type": "git-repository",
+          "locator": "example/status-repository"
+        },
+        "acceptance_criteria": [
+          {
+            "id": "status-exists",
+            "description": "STATUS.md exists and contains the current completion state."
+          }
+        ],
+        "constraints": [
+          "No files other than STATUS.md change."
+        ],
+        "verification_expectations": [
+          {
+            "id": "check-status",
+            "description": "Observe STATUS.md and compare it with the requested completion state.",
+            "method": "content-inspection"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "plan",
+      "id": "portable-example/run-001/plan",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:05:00Z",
+      "provenance": {
+        "producer": "example-planner",
+        "model": "example-model"
+      },
+      "spec": {
+        "result_ref": {
+          "id": "portable-example/run-001/result",
+          "kind": "result",
+          "version": 1
+        },
+        "status": "approved",
+        "summary": "Inspect the target, write STATUS.md, and verify the exact file scope and content.",
+        "steps": [
+          {
+            "id": "write-status",
+            "title": "Write the status document",
+            "description": "Create STATUS.md with the requested current completion state.",
+            "depends_on": [],
+            "risks": [
+              {
+                "id": "scope-drift",
+                "description": "The implementation could change unrelated files.",
+                "mitigation": "Verify the changed-file list before completion.",
+                "status": "mitigated"
+              }
+            ],
+            "assumptions": [
+              "The target is writable."
+            ],
+            "verification": "STATUS.md exists, has the expected content, and is the only changed file.",
+            "expected": {
+              "delay": {
+                "status": "estimated",
+                "value": 5,
+                "unit": "minute"
+              },
+              "cost": {
+                "status": "unknown",
+                "value": null,
+                "unit": "usd",
+                "limitations": "The producer has no provider billing feed."
+              }
+            },
+            "executor_requirements": [
+              "Read and write access to the target repository."
+            ]
+          }
+        ],
+        "budget": {
+          "delay": {
+            "status": "estimated",
+            "value": 15,
+            "unit": "minute"
+          }
+        },
+        "accepted_risks": [],
+        "approval_refs": [
+          {
+            "id": "portable-example/run-001/review",
+            "kind": "review",
+            "version": 1
+          }
+        ]
+      }
+    },
+    {
+      "kind": "review",
+      "id": "portable-example/run-001/review",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:07:00Z",
+      "provenance": {
+        "producer": "example-red-team"
+      },
+      "spec": {
+        "review_type": "red_team",
+        "subject_ref": {
+          "id": "portable-example/run-001/plan",
+          "kind": "plan",
+          "version": 1
+        },
+        "reviewer": "independent-reviewer",
+        "decision": "pass",
+        "rationale": "The file-scope risk is explicitly checked and no unresolved blocking finding remains.",
+        "findings": [
+          {
+            "id": "verify-file-scope",
+            "severity": "improvement",
+            "description": "The verifier should inspect the changed-file list as well as document content.",
+            "consequence": "Content-only verification could miss unrelated changes.",
+            "disposition": "resolved",
+            "rationale": "The plan verification text now includes exact file scope."
+          }
+        ]
+      }
+    },
+    {
+      "kind": "execution",
+      "id": "portable-example/run-001/execution",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:12:00Z",
+      "provenance": {
+        "producer": "example-executor"
+      },
+      "spec": {
+        "plan_ref": {
+          "id": "portable-example/run-001/plan",
+          "kind": "plan",
+          "version": 1
+        },
+        "status": "completed",
+        "started_at": "2026-10-02T12:08:00Z",
+        "finished_at": "2026-10-02T12:12:00Z",
+        "step_runs": [
+          {
+            "step_id": "write-status",
+            "status": "completed",
+            "started_at": "2026-10-02T12:08:00Z",
+            "finished_at": "2026-10-02T12:12:00Z",
+            "actual": {
+              "delay": {
+                "status": "measured",
+                "value": 4,
+                "unit": "minute"
+              },
+              "cost": {
+                "status": "unknown",
+                "value": null,
+                "unit": "usd"
+              }
+            },
+            "realized_risks": [],
+            "evidence": [
+              {
+                "id": "status-file",
+                "description": "The created STATUS.md file.",
+                "uri": "repo:STATUS.md",
+                "media_type": "text/markdown",
+                "observed_at": "2026-10-02T12:12:00Z"
+              }
+            ]
+          }
+        ],
+        "actual": {
+          "delay": {
+            "status": "measured",
+            "value": 4,
+            "unit": "minute"
+          },
+          "cost": {
+            "status": "unknown",
+            "value": null,
+            "unit": "usd"
+          }
+        },
+        "realized_risks": []
+      }
+    },
+    {
+      "kind": "verification",
+      "id": "portable-example/run-001/verification",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:13:00Z",
+      "provenance": {
+        "producer": "example-verifier"
+      },
+      "spec": {
+        "result_ref": {
+          "id": "portable-example/run-001/result",
+          "kind": "result",
+          "version": 1
+        },
+        "execution_ref": {
+          "id": "portable-example/run-001/execution",
+          "kind": "execution",
+          "version": 1
+        },
+        "outcome": "pass",
+        "checks": [
+          {
+            "criterion_id": "status-exists",
+            "outcome": "pass",
+            "description": "STATUS.md exists, contains the requested state, and is the only changed file."
+          }
+        ],
+        "evidence": [
+          {
+            "id": "changed-file-list",
+            "description": "Observed changed-file list containing only STATUS.md.",
+            "uri": "evidence:changed-files.txt",
+            "media_type": "text/plain",
+            "observed_at": "2026-10-02T12:13:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "evaluation",
+      "id": "portable-example/run-001/evaluation",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:14:00Z",
+      "provenance": {
+        "producer": "example-evaluator"
+      },
+      "spec": {
+        "result_ref": {
+          "id": "portable-example/run-001/result",
+          "kind": "result",
+          "version": 1
+        },
+        "plan_ref": {
+          "id": "portable-example/run-001/plan",
+          "kind": "plan",
+          "version": 1
+        },
+        "execution_ref": {
+          "id": "portable-example/run-001/execution",
+          "kind": "execution",
+          "version": 1
+        },
+        "verification_ref": {
+          "id": "portable-example/run-001/verification",
+          "kind": "verification",
+          "version": 1
+        },
+        "result": {
+          "outcome": "achieved",
+          "rationale": "The only acceptance criterion passed with direct artifact and scope observations.",
+          "criterion_outcomes": {
+            "status-exists": "pass"
+          }
+        },
+        "way": {
+          "outcome": "met",
+          "rationale": "The approved step completed without realized risk and within its delay estimate.",
+          "comparisons": {
+            "delay": {
+              "status": "met",
+              "expected": {
+                "status": "estimated",
+                "value": 5,
+                "unit": "minute"
+              },
+              "actual": {
+                "status": "measured",
+                "value": 4,
+                "unit": "minute"
+              }
+            },
+            "cost": {
+              "status": "not_estimated",
+              "actual": {
+                "status": "unknown",
+                "value": null,
+                "unit": "usd"
+              },
+              "rationale": "Neither a trustworthy forecast nor a measured provider cost was available."
+            }
+          }
+        },
+        "improvement_refs": [
+          {
+            "id": "portable-example/run-001/improvement",
+            "kind": "improvement",
+            "version": 1
+          }
+        ]
+      }
+    },
+    {
+      "kind": "improvement",
+      "id": "portable-example/run-001/improvement",
+      "schema_version": 1,
+      "version": 1,
+      "created_at": "2026-10-02T12:15:00Z",
+      "provenance": {
+        "producer": "example-evaluator"
+      },
+      "spec": {
+        "target": "library",
+        "status": "proposed",
+        "title": "Reuse exact file-scope verification",
+        "proposal": "Add a reusable verification component that compares the observed changed-file list with the Result constraints.",
+        "rationale": "The Red Team identified file-scope checking as a generally useful safeguard.",
+        "based_on_refs": [
+          {
+            "id": "portable-example/run-001/review",
+            "kind": "review",
+            "version": 1
+          },
+          {
+            "id": "portable-example/run-001/verification",
+            "kind": "verification",
+            "version": 1
+          }
+        ]
+      }
+    },
+    {
+      "kind": "event",
+      "id": "portable-example/run-001/event-8",
+      "schema_version": 1,
+      "created_at": "2026-10-02T12:15:00Z",
+      "provenance": {
+        "producer": "example-twin-writer"
+      },
+      "spec": {
+        "sequence": 8,
+        "event_type": "IMPROVEMENT_PROPOSED",
+        "actor": "example-evaluator",
+        "subject_refs": [
+          {
+            "id": "portable-example/run-001/improvement",
+            "kind": "improvement",
+            "version": 1
+          }
+        ],
+        "payload": {
+          "summary": "Recorded an evidence-backed library improvement."
+        },
+        "previous_event_hash": null
+      },
+      "extensions": {
+        "example.test/twin:storage": {
+          "stream": "portable-example/run-001"
+        }
+      }
+    }
+  ]
+}
